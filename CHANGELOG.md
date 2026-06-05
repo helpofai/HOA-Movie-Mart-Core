@@ -4,6 +4,19 @@ All notable changes to the HOA Movie Mart Core plugin.
 
 ---
 
+## [1.6.0] — 2026-06-05
+
+### Changed
+- Switched from Releases API to commit-based update detection (`/commits?per_page=1`)
+- Update comparison now uses commit SHA instead of version tags
+- SSL verify auto-disabled on localhost environments
+- Added `is_local()` helper for environment detection
+
+### Fixed
+- cURL SSL errors on WAMP/XAMPP localhost installs
+
+---
+
 ## [1.5.0] — 2026-06-05
 
 ### Added

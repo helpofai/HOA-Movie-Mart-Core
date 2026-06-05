@@ -1,10 +1,8 @@
 <?php
 /**
- * HOA Movie Mart Core — GitHub Plugin Updater
+ * HOA Movie Mart Core — GitHub Plugin Updater (Commit-based)
  *
- * Checks GitHub Releases for new versions of the core plugin.
- * Since the plugin lives in the same repo as the theme, both
- * update together when a new release is published.
+ * Monitors latest commit on the plugin repo. No releases needed.
  *
  * @package HOA_Movie_Mart_Core
  */
@@ -18,9 +16,10 @@ class HOA_Plugin_Updater {
     private $plugin_slug;
     private $plugin_file;
     private $current_version;
-    private $api_url;
+    private $commit_api_url;
+    private $zipball_url;
     private $cache_key;
-    private $cache_ttl = 12 * HOUR_IN_SECONDS;
+    private $cache_ttl = 6 * HOUR_IN_SECONDS;
 
     public function __construct( $plugin_file ) {
         $this->plugin_file = $plugin_file;
@@ -32,38 +31,37 @@ class HOA_Plugin_Updater {
         $data = get_plugin_data( $plugin_file );
         $this->current_version = $data['Version'];
 
-        $this->api_url   = "https://api.github.com/repos/{$this->github_owner}/{$this->github_repo}/releases/latest";
-        $this->cache_key = 'hoa_plugin_update_' . md5( $this->api_url );
-
-        // Optional token from theme settings (shared)
-        $options = get_option( 'hoa_movie_mart_settings' );
+        $this->commit_api_url = "https://api.github.com/repos/{$this->github_owner}/{$this->github_repo}/commits?per_page=1";
+        $this->zipball_url    = "https://api.github.com/repos/{$this->github_owner}/{$this->github_repo}/zipball";
+        $this->cache_key      = 'hoa_plugin_update_' . md5( $this->commit_api_url );
 
         add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_for_update' ) );
         add_filter( 'plugins_api',                           array( $this, 'plugin_info' ), 20, 3 );
         add_filter( 'upgrader_package_options',               array( $this, 'maybe_clear_cache' ) );
     }
 
-    // ——— Check for updates ———
-
     public function check_for_update( $transient ) {
         if ( ! is_object( $transient ) ) {
             $transient = new stdClass();
         }
 
-        $release = $this->fetch_release();
-        if ( ! $release ) return $transient;
+        $commit = $this->fetch_latest_commit();
+        if ( ! $commit ) return $transient;
 
-        $remote_ver = ltrim( $release['tag_name'], 'vV' );
-        if ( ! version_compare( $remote_ver, $this->current_version, '>' ) ) {
+        $stored_sha = get_option( 'hoa_plugin_last_sha', '' );
+        if ( $stored_sha === $commit['sha'] ) return $transient;
+
+        if ( empty( $stored_sha ) ) {
+            update_option( 'hoa_plugin_last_sha', $commit['sha'] );
             return $transient;
         }
 
         $transient->response[ $this->plugin_slug ] = (object) array(
             'slug'        => dirname( $this->plugin_slug ),
             'plugin'      => $this->plugin_slug,
-            'new_version' => $remote_ver,
-            'url'         => $release['html_url'],
-            'package'     => $release['zipball_url'],
+            'new_version' => $commit['short_sha'],
+            'url'         => $commit['html_url'],
+            'package'     => $this->zipball_url,
             'tested'      => '6.7',
             'requires_php'=> '7.2',
         );
@@ -71,42 +69,37 @@ class HOA_Plugin_Updater {
         return $transient;
     }
 
-    // ——— Plugin info popup ———
-
     public function plugin_info( $result, $action, $args ) {
         if ( 'plugin_information' !== $action ) return $result;
         if ( dirname( $this->plugin_slug ) !== $args->slug ) return $result;
 
-        $release = $this->fetch_release();
-        if ( ! $release ) return $result;
-
-        $remote_ver = ltrim( $release['tag_name'], 'vV' );
+        $commit = $this->fetch_latest_commit();
+        if ( ! $commit ) return $result;
 
         return (object) array(
             'name'          => 'HOA Movie Mart Core',
             'slug'          => dirname( $this->plugin_slug ),
-            'version'       => $remote_ver,
+            'version'       => $commit['short_sha'],
             'author'        => '<a href="https://helpofai.com">HelpOfAi Team</a>',
             'homepage'      => 'https://helpofai.com',
             'requires'      => '5.0',
             'tested'        => '6.7',
             'requires_php'  => '7.2',
-            'last_updated'  => $release['published_at'],
+            'last_updated'  => $commit['date'],
             'sections'      => array(
-                'description'  => 'Core functionality for HOA Movie Mart theme — Movie CPT, taxonomies, meta boxes, and widgets.',
-                'changelog'    => '<pre>' . esc_html( $release['body'] ) . '</pre>',
+                'description'  => 'Core functionality for HOA Movie Mart theme.',
+                'changelog'    => '<pre>' . esc_html( $commit['message'] ) . '</pre>',
             ),
-            'download_link' => $release['zipball_url'],
+            'download_link' => $this->zipball_url,
         );
     }
 
-    // ——— Fetch from GitHub ———
-
-    private function fetch_release() {
+    private function fetch_latest_commit() {
         $cached = get_transient( $this->cache_key );
         if ( false !== $cached ) return $cached;
 
         $options = get_option( 'hoa_movie_mart_settings' );
+        $token   = ! empty( $options['github_token'] ) ? $options['github_token'] : null;
 
         $args = array(
             'timeout'   => 15,
@@ -114,42 +107,55 @@ class HOA_Plugin_Updater {
                 'Accept'     => 'application/vnd.github.v3+json',
                 'User-Agent' => 'HOA-Plugin-Updater/' . $this->current_version,
             ),
-            'sslverify' => true,
+            'sslverify' => ! $this->is_local(),
         );
 
-        if ( ! empty( $options['github_token'] ) ) {
-            $args['headers']['Authorization'] = 'token ' . $options['github_token'];
+        if ( $token ) {
+            $args['headers']['Authorization'] = 'token ' . $token;
         }
 
-        $response = wp_remote_get( $this->api_url, $args );
+        $response = wp_remote_get( $this->commit_api_url, $args );
 
         if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
             set_transient( $this->cache_key, null, HOUR_IN_SECONDS );
             return null;
         }
 
-        $body = json_decode( wp_remote_retrieve_body( $response ), true );
-        if ( ! $body || empty( $body['tag_name'] ) ) {
+        $commits = json_decode( wp_remote_retrieve_body( $response ), true );
+        if ( empty( $commits ) || ! is_array( $commits ) ) {
             set_transient( $this->cache_key, null, HOUR_IN_SECONDS );
             return null;
         }
 
-        $release = array(
-            'tag_name'    => $body['tag_name'],
-            'html_url'    => $body['html_url'],
-            'zipball_url' => $body['zipball_url'],
-            'published_at'=> $body['published_at'],
-            'body'         => $body['body'],
+        $c = $commits[0];
+        $result = array(
+            'sha'       => $c['sha'],
+            'short_sha' => substr( $c['sha'], 0, 7 ),
+            'message'   => $c['commit']['message'],
+            'author'    => $c['commit']['author']['name'],
+            'date'      => $c['commit']['author']['date'],
+            'html_url'  => $c['html_url'],
         );
 
-        set_transient( $this->cache_key, $release, $this->cache_ttl );
-        return $release;
+        set_transient( $this->cache_key, $result, $this->cache_ttl );
+        return $result;
     }
 
     public function maybe_clear_cache( $options ) {
         if ( isset( $options['hook_extra']['plugin'] ) && $this->plugin_slug === $options['hook_extra']['plugin'] ) {
             delete_transient( $this->cache_key );
+            $commit = $this->fetch_latest_commit();
+            if ( $commit ) {
+                update_option( 'hoa_plugin_last_sha', $commit['sha'] );
+            }
         }
         return $options;
+    }
+
+    private function is_local() {
+        $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
+        return in_array( $host, array( 'localhost', '127.0.0.1', '::1' ) )
+            || substr( $host, -6 ) === '.local'
+            || substr( $host, -7 ) === '.test';
     }
 }
