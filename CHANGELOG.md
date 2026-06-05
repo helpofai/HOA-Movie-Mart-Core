@@ -4,6 +4,17 @@ All notable changes to the HOA Movie Mart Core plugin.
 
 ---
 
+## [2.0.1] — 2026-06-05 — Update test
+
+### Added
+- GitHub zipball folder auto-rename via `upgrader_source_selection` filter
+- Filesystem writability pre-flight checks
+
+### Fixed
+- Plugin updates now install correctly on live servers (GitHub folder wrapping resolved)
+
+---
+
 ## [1.9.0] — 2026-06-05
 
 ### Fixed

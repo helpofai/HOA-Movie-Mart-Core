@@ -38,6 +38,7 @@ class HOA_Plugin_Updater {
         add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_for_update' ) );
         add_filter( 'plugins_api',                           array( $this, 'plugin_info' ), 20, 3 );
         add_filter( 'upgrader_package_options',               array( $this, 'maybe_clear_cache' ) );
+        add_filter( 'upgrader_source_selection',              array( $this, 'fix_github_folder' ), 10, 4 );
     }
 
     public function check_for_update( $transient ) {
@@ -150,6 +151,23 @@ class HOA_Plugin_Updater {
             }
         }
         return $options;
+    }
+
+    public function fix_github_folder( $source, $remote_source, $upgrader, $extra ) {
+        $plugin_dir = 'hoa-movie-mart-core';
+        if ( isset( $extra['plugin'] ) && dirname( $extra['plugin'] ) === $plugin_dir ) {
+            if ( is_dir( $source ) && basename( $source ) !== $plugin_dir ) {
+                $new_source = trailingslashit( dirname( $source ) ) . $plugin_dir;
+                if ( $source !== $new_source ) {
+                    if ( is_dir( $new_source ) ) {
+                        $GLOBALS['wp_filesystem']->delete( $new_source, true );
+                    }
+                    rename( $source, $new_source );
+                    $source = $new_source;
+                }
+            }
+        }
+        return $source;
     }
 
     private function is_local() {

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: HOA Movie Mart Core
  * Description: Core functionality for HOA Movie Mart theme, including Movie Custom Post Type and Taxonomies.
- * Version: 1.9.0
+ * Version: 2.0.1
  * Author: the HelpOfAi team
  * Text Domain: helpofai
  */
