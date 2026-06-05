@@ -15,6 +15,20 @@ All notable changes to the HOA Movie Mart Core plugin.
 
 ---
 
+## [2.0.9] — 2026-06-06
+
+### Changed
+- Bridge AJAX key verification endpoint registered
+
+---
+
+## [2.0.8] — 2026-06-05
+
+### Changed
+- Version bump only
+
+---
+
 ## [1.9.0] — 2026-06-05
 
 ### Fixed
