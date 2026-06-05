@@ -4,6 +4,13 @@ All notable changes to the HOA Movie Mart Core plugin.
 
 ---
 
+## [1.7.0] — 2026-06-05
+
+### Added
+- One-click "Update Plugin Now" button with Yes/No confirmation dialog
+
+---
+
 ## [1.6.0] — 2026-06-05
 
 ### Changed
