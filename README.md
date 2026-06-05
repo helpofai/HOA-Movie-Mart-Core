@@ -1,53 +1,86 @@
-# ⚙️ HOA Movie Mart Core Plugin
+# HOA Movie Mart Core
 
-The backbone of the HOA Movie Mart ecosystem. This plugin handles the data architecture, custom post types, and backend logic required for the theme to function at a professional level.
-
----
-
-## 🚀 Key Functionality
-
-### 📂 Custom Post Types (CPT)
-- **Movies (`movie`):** The primary content type for movies and TV series.
-- **Reports (`report`):** Automates the dead-link reporting system.
-
-### 🏷️ Custom Taxonomies
-- **Genres:** Dynamic movie classification.
-- **Years:** Temporal organization.
-- **Quality:** Filtering by resolution (4K, 1080p, etc.).
-- **Studios/Networks:** Brand-based filtering.
-
-### 💾 Metadata Management
-- **Movie Details:** IMDb Rating, Runtime, Trailer URLs, and Cast.
-- **Download Engine:** Secure JSON-based storage for multi-server download links.
-- **Stats Tracker:** Built-in view and download counter for "Trending" logic.
+**Core plugin for the HOA Movie Mart WordPress theme.**  
+Registers the Movie custom post type, taxonomies, meta boxes, and widgets.
 
 ---
 
-## 🔌 Integration
+## Requirements
 
-### Theme Dependency
-This plugin is specifically designed to work with the **HOA Movie Mart Theme**. It provides the necessary data fields (Meta Boxes) that the theme displays on the front end.
-
-### AJAX Handlers
-- `hoa_live_search`: Powers the cinematic search overlay.
-- `hoa_report_dead_link`: Processes user-submitted link error reports.
-- `hoa_verify_gate`: Manages the human-verification sequence for downloads.
+- WordPress 5.0+
+- PHP 7.2+
+- [HOA Movie Mart theme](https://github.com/helpofai/HOA-Movie-Mart) (recommended)
 
 ---
 
-## 🛠️ Setup
-1. Upload to `/wp-content/plugins/hoa-movie-mart-core/`.
-2. Activate via the WordPress Plugins dashboard.
-3. Configure **Turnstile Site Key** in the Theme Settings for secure download links.
+## Features
+
+- **Movie Custom Post Type** — full movie entries with featured images, excerpts, and comments
+- **Taxonomies** — Genre, Year, Quality, Director, Cast
+- **Meta Boxes** — IMDb rating, runtime, trailer URL, language, download links (JSON), DMCA toggle
+- **Report CPT** — dead link reports from users
+- **Request CPT** — user movie/series requests
+- **Custom Widgets** — Latest Movies, Visual Recent Posts, Genre/Taxonomy list
+- **Download Link Repeater** — multiple sources per movie with encryption support
+- **GitHub Auto-Updates** — pulls latest release from GitHub, no manual zip uploads
 
 ---
 
-## 🛡️ Security
-- **Nonce Verification:** All AJAX requests are protected with security nonces.
-- **Data Sanitization:** Strict use of `sanitize_text_field` and `absint` for all metadata updates.
-- **Bot Protection:** Integrated logic to prevent automated scrapers from stealing download links.
+## Installation
+
+1. Download the [latest release](https://github.com/helpofai/hoa-movie-mart-core/releases/latest) zip
+2. In WordPress admin, go to **Plugins → Add New → Upload Plugin**
+3. Choose the zip file and click **Install Now**
+4. **Activate** the plugin
+
+Or clone into `wp-content/plugins/`:
+
+```bash
+cd wp-content/plugins
+git clone https://github.com/helpofai/hoa-movie-mart-core.git
+```
 
 ---
 
-## 📜 License
-Developed by the HelpOfAi team. Intended for use exclusively with HOA Premium Themes.
+## GitHub Auto-Updates
+
+This plugin checks the GitHub Releases API for new versions and integrates with WordPress's native update system.
+
+- **Public repos** — works out of the box (60 API requests/hour)
+- **Private repos** — add a GitHub personal access token in the HOA Movie Mart theme settings (5,000 req/h)
+- Updates appear under **Dashboard → Updates** and can be installed with one click
+
+---
+
+## Development
+
+```bash
+git clone https://github.com/helpofai/hoa-movie-mart-core.git
+cd hoa-movie-mart-core
+```
+
+### Releasing a new version
+
+1. Update the `Version:` header in `hoa-movie-mart-core.php`
+2. Update `CHANGELOG.md`
+3. Commit and push
+4. Create a [GitHub Release](https://github.com/helpofai/hoa-movie-mart-core/releases/new) with a tag like `v1.5.0`
+5. WordPress sites will detect the update within 12 hours
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md)
+
+---
+
+## License
+
+GPL-2.0-or-later — same as WordPress.
+
+---
+
+## Author
+
+Built by the [HelpOfAi](https://helpofai.com) team.

@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class HOA_Plugin_Updater {
 
     private $github_owner = 'helpofai';
-    private $github_repo  = 'HOA-Movie-Mart';
+    private $github_repo  = 'hoa-movie-mart-core';
     private $plugin_slug;
     private $plugin_file;
     private $current_version;
