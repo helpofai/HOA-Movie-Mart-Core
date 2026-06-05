@@ -4,6 +4,21 @@ All notable changes to the HOA Movie Mart Core plugin.
 
 ---
 
+## [1.5.0] — 2026-06-05
+
+### Added
+- GitHub auto-update system via separate repo (`helpofai/HOA-Movie-Mart-Core`)
+- `HOA_Plugin_Updater` class with version comparison, caching, WordPress integration
+- Shared GitHub token support with theme settings
+- Plugin info popup in WordPress plugin details modal
+- CHANGELOG.md and updated README.md
+
+### Changed
+- Plugin version bumped to 1.5.0
+- README rewritten with install guide, features list, development workflow
+
+---
+
 ## [1.4.0] — 2026-03-01
 
 ### Added
