@@ -57,10 +57,11 @@ class HOA_Plugin_Updater {
             return $transient;
         }
 
+        $new_ver = $commit['version'] ?: $commit['short_sha'];
         $transient->response[ $this->plugin_slug ] = (object) array(
             'slug'        => dirname( $this->plugin_slug ),
             'plugin'      => $this->plugin_slug,
-            'new_version' => $commit['short_sha'],
+            'new_version' => $new_ver,
             'url'         => $commit['html_url'],
             'package'     => $this->zipball_url,
             'tested'      => '6.7',
@@ -129,13 +130,23 @@ class HOA_Plugin_Updater {
         }
 
         $c = $commits[0];
+        $full_sha = $c['sha'];
+        $remote_ver = null;
+        $raw_url = "https://raw.githubusercontent.com/{$this->github_owner}/{$this->github_repo}/{$full_sha}/hoa-movie-mart-core.php";
+        $raw_resp = wp_remote_get( $raw_url, array( 'timeout' => 10, 'sslverify' => ! $this->is_local(), 'headers' => array( 'User-Agent' => 'HOA-Plugin-Updater' ) ) );
+        if ( ! is_wp_error( $raw_resp ) && 200 === wp_remote_retrieve_response_code( $raw_resp ) ) {
+            if ( preg_match( '/Version:\s*([0-9.]+)/i', wp_remote_retrieve_body( $raw_resp ), $m ) ) {
+                $remote_ver = $m[1];
+            }
+        }
         $result = array(
-            'sha'       => $c['sha'],
-            'short_sha' => substr( $c['sha'], 0, 7 ),
-            'message'   => $c['commit']['message'],
-            'author'    => $c['commit']['author']['name'],
-            'date'      => $c['commit']['author']['date'],
-            'html_url'  => $c['html_url'],
+            'sha'        => $full_sha,
+            'short_sha'  => substr( $full_sha, 0, 7 ),
+            'message'    => $c['commit']['message'],
+            'author'     => $c['commit']['author']['name'],
+            'date'       => $c['commit']['author']['date'],
+            'html_url'   => $c['html_url'],
+            'version'    => $remote_ver,
         );
 
         set_transient( $this->cache_key, $result, $this->cache_ttl );
