@@ -4,6 +4,13 @@ All notable changes to the HOA Movie Mart Core plugin.
 
 ---
 
+## [1.8.0] — 2026-06-05
+
+### Changed
+- "Update Plugin Now" now opens terminal with live progress during install
+
+---
+
 ## [1.7.0] — 2026-06-05
 
 ### Added
