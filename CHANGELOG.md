@@ -4,6 +4,14 @@ All notable changes to the HOA Movie Mart Core plugin.
 
 ---
 
+## [1.9.0] — 2026-06-05
+
+### Fixed
+- Plugin updater filesystem initialization and writability checks
+- Better error messages with actionable fix commands
+
+---
+
 ## [1.8.0] — 2026-06-05
 
 ### Changed
